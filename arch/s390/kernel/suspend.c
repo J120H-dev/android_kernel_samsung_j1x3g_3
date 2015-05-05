@@ -10,6 +10,7 @@
 #include <linux/suspend.h>
 #include <linux/mm.h>
 #include <asm/ctl_reg.h>
+#include <asm/ipl.h>
 
 /*
  * References to section boundaries
