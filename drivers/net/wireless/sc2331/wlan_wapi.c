@@ -521,6 +521,7 @@ unsigned short wlan_rx_wapi_decryption(wlan_vif_t *vif,
 	unsigned char calc_data_mic[16] = { 0 };
 	unsigned char iv[16] = { 0 };
 	unsigned char keyid = { 0 };
+	unsigned char *key;
 
 	unsigned short ral_data_len = 0;
 	unsigned short encryp_data_len = 0;
@@ -538,7 +539,7 @@ unsigned short wlan_rx_wapi_decryption(wlan_vif_t *vif,
 		/* add qos len 2 byte */
 		ptk_headr_len += 2;
 	}
-
+        
 	/* valid addr4 in case:ToDS==1 && FromDS==1 */
 	if ((*(p_ptk_header + 1) & 0x03) != 0x03)
 		valid_addr4 = false;
@@ -550,8 +551,8 @@ unsigned short wlan_rx_wapi_decryption(wlan_vif_t *vif,
 	offset += 2;
 
 	/* save addr1 addr2 */
-	memcpy(p_ptk_header, &input_ptk[offset], 6);
-	memcpy(p_ptk_header + 6, vif->cfg80211.bssid, 6);
+       memcpy(p_ptk_header, &input_ptk[offset], 6);
+       memcpy(p_ptk_header + 6, vif->cfg80211.bssid, 6);
 	is_group_ptk = is_group(p_ptk_header);
 	p_ptk_header += 12;
 	offset += 12;
@@ -626,37 +627,62 @@ unsigned short wlan_rx_wapi_decryption(wlan_vif_t *vif,
 		if ((iv[15] & 0x01) != 0x01)
 			return 0;
 	}
+
 	/* decryption */
 	if (is_group_ptk) {
-		WapiCryptoSms4(iv,
-			       mget_wapi_group_pkt_key(vif, keyid),
-			       (input_ptk + header_len + KEYID_LEN +
-				RESERVD_LEN + PN_LEN), encryp_data_len,
-			       (input_ptk + header_len + KEYID_LEN +
-				RESERVD_LEN + PN_LEN + encryp_data_len - 16),
-			       output_buf);
+		key = mget_wapi_group_pkt_key(vif, keyid);
+		if (NULL != key) {
+			WapiCryptoSms4(iv, key,
+					(input_ptk + header_len + KEYID_LEN +
+					RESERVD_LEN + PN_LEN), encryp_data_len,
+					(input_ptk + header_len + KEYID_LEN +
+					RESERVD_LEN + PN_LEN + encryp_data_len - 16),
+					output_buf);
+		} else {
+			printke("%s: group ptk key is NULL!\n", __func__);
+			wlan_rx_malformed_handler();
+			return 0;
+		}
 	} else {
-		WapiCryptoSms4(iv,
-			       mget_wapi_pairwise_pkt_key(vif, keyid),
-			       (input_ptk + header_len + KEYID_LEN +
-				RESERVD_LEN + PN_LEN), encryp_data_len,
-			       (input_ptk + header_len + KEYID_LEN +
-				RESERVD_LEN + PN_LEN + encryp_data_len - 16),
-			       output_buf);
+		key = mget_wapi_pairwise_pkt_key(vif, keyid);
+		if (NULL != key) {
+			WapiCryptoSms4(iv, key,
+					(input_ptk + header_len + KEYID_LEN +
+					RESERVD_LEN + PN_LEN), encryp_data_len,
+					(input_ptk + header_len + KEYID_LEN +
+					RESERVD_LEN + PN_LEN + encryp_data_len - 16),
+					output_buf);
+		} else {
+			printke("%s: pairwise ptk key is NULL!\n", __func__);
+			wlan_rx_malformed_handler();
+			return 0;
+		}
 	}
-	memcpy(data_mic, output_buf + ral_data_len, MIC_LEN);
+	memcpy(data_mic, output_buf + ral_data_len, MIC_LEN);     
 
 	/* calc mic */
 	if (is_group_ptk) {
-		WapiCryptoSms4Mic(iv,
-				  mget_wapi_group_mic_key(vif, keyid),
-				  ptk_header, ptk_headr_len,
-				  (output_buf), ral_data_len, calc_data_mic);
+		key = mget_wapi_group_mic_key(vif, keyid);
+		if (NULL != key) {
+			WapiCryptoSms4Mic(iv, key,
+					ptk_header, ptk_headr_len,
+					(output_buf), ral_data_len, calc_data_mic);
+		} else {
+			printke("%s: group mic key is NULL!\n", __func__);
+			wlan_rx_malformed_handler();
+			return 0;
+		}
 	} else {
-		WapiCryptoSms4Mic(iv,
-				  mget_wapi_pairwise_mic_key(vif, keyid),
-				  ptk_header, ptk_headr_len,
-				  (output_buf), ral_data_len, calc_data_mic);
+		key = mget_wapi_pairwise_mic_key(vif, keyid);
+		if (NULL != key) {
+			WapiCryptoSms4Mic(iv, key,
+					ptk_header, ptk_headr_len,
+					(output_buf), ral_data_len, calc_data_mic);
+		} else {
+			printke("%s: pairwise mic key is NULL!\n", __func__);
+			wlan_rx_malformed_handler();
+			return 0;
+		}
 	}
 
 	if (memcmp(calc_data_mic, data_mic, MIC_LEN) != 0)
@@ -664,4 +690,3 @@ unsigned short wlan_rx_wapi_decryption(wlan_vif_t *vif,
 	else
 		return ral_data_len;
 }
-
