@@ -1436,6 +1436,8 @@ CONFIG_SLHC=y
 # CONFIG_USB_HSO is not set
 # CONFIG_USB_IPHETH is not set
 CONFIG_WLAN=y
+CONFIG_BCMDHD_FW_PATH="/vendor/etc/wifi/bcmdhd_sta.bin"
+CONFIG_BCMDHD_NVRAM_PATH="/vendor/etc/wifi/nvram_net.txt"
 # CONFIG_USB_ZD1201 is not set
 # CONFIG_USB_NET_RNDIS_WLAN is not set
 # CONFIG_WIFI_CONTROL_FUNC is not set
