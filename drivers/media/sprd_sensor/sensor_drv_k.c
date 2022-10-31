@@ -899,7 +899,6 @@ int sensor_k_set_mipi_level(uint32_t *fd_handle, uint32_t plus_level)
 	return SENSOR_K_SUCCESS;
 }
 
-
 LOCAL int _Sensor_K_ReadReg(struct sensor_file_tag *fd_handle, struct sensor_reg_bits_tag *pReg)
 {
 	uint8_t                       cmd[2] = { 0 };
