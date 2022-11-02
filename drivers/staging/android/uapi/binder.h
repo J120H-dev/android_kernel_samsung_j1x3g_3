@@ -36,9 +36,56 @@ enum {
 	BINDER_TYPE_PTR		= B_PACK_CHARS('p', 't', '*', B_TYPE_LARGE),
 };
 
-enum {
+/**
+ * enum flat_binder_object_shifts: shift values for flat_binder_object_flags
+ * @FLAT_BINDER_FLAG_SCHED_POLICY_SHIFT: shift for getting scheduler policy.
+ *
+ */
+enum flat_binder_object_shifts {
+	FLAT_BINDER_FLAG_SCHED_POLICY_SHIFT = 9,
+};
+
+/**
+ * enum flat_binder_object_flags - flags for use in flat_binder_object.flags
+ */
+enum flat_binder_object_flags {
+	/**
+	 * @FLAT_BINDER_FLAG_PRIORITY_MASK: bit-mask for min scheduler priority
+	 *
+	 * These bits can be used to set the minimum scheduler priority
+	 * at which transactions into this node should run. Valid values
+	 * in these bits depend on the scheduler policy encoded in
+	 * @FLAT_BINDER_FLAG_SCHED_POLICY_MASK.
+	 *
+	 * For SCHED_NORMAL/SCHED_BATCH, the valid range is between [-20..19]
+	 * For SCHED_FIFO/SCHED_RR, the value can run between [1..99]
+	 */
 	FLAT_BINDER_FLAG_PRIORITY_MASK = 0xff,
+	/**
+	 * @FLAT_BINDER_FLAG_ACCEPTS_FDS: whether the node accepts fds.
+	 */
 	FLAT_BINDER_FLAG_ACCEPTS_FDS = 0x100,
+	/**
+	 * @FLAT_BINDER_FLAG_SCHED_POLICY_MASK: bit-mask for scheduling policy
+	 *
+	 * These two bits can be used to set the min scheduling policy at which
+	 * transactions on this node should run. These match the UAPI
+	 * scheduler policy values, eg:
+	 * 00b: SCHED_NORMAL
+	 * 01b: SCHED_FIFO
+	 * 10b: SCHED_RR
+	 * 11b: SCHED_BATCH
+	 */
+	FLAT_BINDER_FLAG_SCHED_POLICY_MASK =
+		3U << FLAT_BINDER_FLAG_SCHED_POLICY_SHIFT,
+
+	/**
+	 * @FLAT_BINDER_FLAG_INHERIT_RT: whether the node inherits RT policy
+	 *
+	 * Only when set, calls into this node will inherit a real-time
+	 * scheduling policy from the caller (for synchronous transactions).
+	 */
+	FLAT_BINDER_FLAG_INHERIT_RT = 0x800,
 };
 
 #ifdef BINDER_IPC_32BIT
@@ -131,7 +178,7 @@ enum {
 
 /* struct binder_fd_array_object - object describing an array of fds in a buffer
  * @hdr:		common header structure
- * @pad:                padding to ensure correct alignment
+ * @pad:		padding to ensure correct alignment
  * @num_fds:		number of file descriptors in the buffer
  * @parent:		index in offset array to buffer holding the fd array
  * @parent_offset:	start offset of fd array in the buffer
@@ -152,7 +199,7 @@ enum {
  */
 struct binder_fd_array_object {
 	struct binder_object_header	hdr;
-	__u32                           pad;
+	__u32				pad;
 	binder_size_t			num_fds;
 	binder_size_t			parent;
 	binder_size_t			parent_offset;
@@ -234,10 +281,8 @@ struct binder_transaction_data {
 	 * identifying the target and contents of the transaction.
 	 */
 	union {
-		/* target descriptor of command transaction */
-		__u32	handle;
-		/* target descriptor of return transaction */
-		binder_uintptr_t ptr;
+		__u32	handle;	/* target descriptor of command transaction */
+		binder_uintptr_t ptr;	/* target descriptor of return transaction */
 	} target;
 	binder_uintptr_t	cookie;	/* target object cookie */
 	__u32		code;		/* transaction command */
@@ -277,7 +322,7 @@ struct binder_ptr_cookie {
 struct binder_handle_cookie {
 	__u32 handle;
 	binder_uintptr_t cookie;
-} __packed;
+} __attribute__((packed));
 
 struct binder_pri_desc {
 	__s32 priority;
@@ -460,4 +505,5 @@ enum binder_driver_command_protocol {
 };
 
 #endif /* _UAPI_LINUX_BINDER_H */
+
 

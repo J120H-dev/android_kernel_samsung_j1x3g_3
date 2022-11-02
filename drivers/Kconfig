@@ -174,8 +174,6 @@ source "drivers/reset/Kconfig"
 
 source "drivers/sipc/Kconfig"
 
-source "drivers/android/Kconfig"
-
 source "drivers/sensor/Kconfig"
 
 source "drivers/iq/Kconfig"
@@ -185,7 +183,5 @@ source "drivers/autotst/Kconfig"
 source "drivers/gator/Kconfig"
 
 source "drivers/cpuhotplug/Kconfig"
-
-source "drivers/android/Kconfig"
 
 endmenu

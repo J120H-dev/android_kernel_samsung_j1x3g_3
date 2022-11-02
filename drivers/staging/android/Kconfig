@@ -8,6 +8,47 @@ config ANDROID
 
 if ANDROID
 
+config ANDROID_BINDER_IPC
+	bool "Android Binder IPC Driver"
+	default n
+	---help---
+	  Binder is used in Android for both communication between processes,
+	  and remote method invocation.
+
+	  This means one Android process can call a method/routine in another
+	  Android process, using Binder to identify, invoke and pass arguments
+	  between said processes.
+
+config ANDROID_BINDER_IPC_32BIT
+	bool "Use old (Android 4.4 and earlier) 32-bit binder API"
+	depends on !64BIT && ANDROID_BINDER_IPC	
+	default y
+	---help---
+	  Enable to support an old 32-bit Android user-space. Breaks the new
+	  Android user-space.
+
+config ANDROID_BINDER_DEVICES
+	string "Android Binder devices"
+	depends on ANDROID_BINDER_IPC
+	default "binder,hwbinder,vndbinder"
+	---help---
+	  Default value for the binder.devices parameter.
+
+	  The binder.devices parameter is a comma-separated list of strings
+	  that specifies the names of the binder device nodes that will be
+	  created. Each binder device has its own context manager, and is
+	  therefore logically separated from the other devices.
+
+config ANDROID_BINDER_IPC_SELFTEST
+        bool "Android Binder IPC Driver Selftest"
+        depends on ANDROID_BINDER_IPC
+        ---help---
+          This feature allows binder selftest to run.
+
+          Binder selftest checks the allocation and free of binder buffers
+          exhaustively with combinations of various buffer sizes and
+          alignments.
+
 config ASHMEM
 	bool "Enable the Anonymous Shared Memory Subsystem"
 	default n
@@ -19,23 +60,6 @@ config ASHMEM
 
 	  It is, in theory, a good memory allocator for low-memory devices,
 	  because it can discard shared memory units when under memory pressure.
-
-config ANDROID_LOGGER
-	tristate "Android log driver"
-	default n
-	---help---
-	  This adds support for system-wide logging using four log buffers.
-
-	  These are:
-
-	      1: main
-	      2: events
-	      3: radio
-	      4: system
-
-	  Log reading and writing is performed via normal Linux reads and
-	  optimized writes. This optimization avoids logging having too
-	  much overhead in the system.
 
 config ANDROID_TIMED_OUTPUT
 	bool "Timed output class driver"
@@ -130,6 +154,20 @@ config RUNTIME_COMPCACHE
         default n
         help
           This option enables rtcc v3 for android
+
+config POMEMR_RECLAIM
+	bool "page order mem reclaim"
+	depends on ANDROID
+	default n
+	help
+	  This option enables page order memory reclaim
+
+config POMEMR_RECLAIM_FILE
+	bool "page order mem reclaim for file pages"
+	depends on ANDROID && POMEMR_RECLAIM
+	default n
+	help
+	  This option enables page order memory reclaim for file pages
 
 config KSWAPD_NOSWAP
         bool "Disable swap in kswapd"
